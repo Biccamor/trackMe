@@ -1,8 +1,10 @@
 import cv2 as cv
 import numpy as np
 import keyboard
+from ultralytics import YOLO
 
 cap = cv.VideoCapture("video.mp4")
+model = YOLO('yolo11n.pt')
 
 def open() -> bool:
 
