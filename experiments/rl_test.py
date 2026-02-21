@@ -48,11 +48,12 @@ def print_map(world: list,  pos: int, end: int):
     print(result)
     print("-----------------------------------------------")
 
-def bellman_equation(q_table:list, lr: float, eps: float, reward:int, pos: int, next_pos, move: int):
+def bellman_equation(q_table:list, lr: float, reward:int, pos: int, next_pos, move: int):
     
+    gamma = 0.9
     old_value = q_table[pos][move]
     max_value = max(q_table[next_pos])
-    new_value = old_value + lr * (reward + eps * max_value- old_value)
+    new_value = old_value + lr * (reward + gamma * max_value- old_value)
     q_table[pos][move] = new_value
 
 def choose_move(pos: int, q_table: list, eps: float) -> int:
@@ -60,9 +61,9 @@ def choose_move(pos: int, q_table: list, eps: float) -> int:
         return random.choice([0,1])
     
     if q_table[pos][0] < q_table[pos][1]:
-        return 0
-    else:
         return 1
+    else:
+        return 0
 
 def main():
     world = [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,2,0,0,0,0,0]
@@ -79,10 +80,11 @@ def main():
     for epoch in range(50):
         pos = start
         total_score = 0
-
+        step = 0
         while True:
-            
+            step +=1
             if epoch > 45:
+                time.sleep(0.1)
                 print_map(world,pos,end)
             move = choose_move(pos, q_table, eps)            
             
@@ -91,24 +93,25 @@ def main():
                 pos -= 1
                 pos = boundaries(pos, length)
                 reward = rewards(pos,end,prev_pos)
+                bellman_equation(q_table,lr,reward,prev_pos,pos,move)
                 total_score+=reward
 
 
             elif move == 0:
                 prev_pos = pos
                 pos+=1
-                pos = boundaries(pos,length)                          
+                pos = boundaries(pos, length)
                 reward = rewards(pos,end,prev_pos)
+                bellman_equation(q_table,lr,reward,prev_pos,pos,move)
                 total_score+=reward
-                
+
             if pos == end:
                 break
-
-            if move == 'q':
+            if step > 20:
                 break
-        
         eps *= eps_rate
-        
+        eps = max(eps_min, eps)
+
         if epoch>44:
             print(total_score)
     
