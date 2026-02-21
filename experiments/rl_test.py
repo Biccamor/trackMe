@@ -48,15 +48,19 @@ def print_map(world: list,  pos: int, end: int):
     print(result)
     print("-----------------------------------------------")
 
-def bellman_equation(learning_rate: float, eps: float, reward:int, pos: int):
-    ...
+def bellman_equation(q_table:list, lr: float, eps: float, reward:int, pos: int, next_pos, move: int):
+    
+    old_value = q_table[pos][move]
+    max_value = max(q_table[next_pos])
+    new_value = old_value + lr * (reward + eps * max_value- old_value)
+    q_table[pos][move] = new_value
 
 def choose_move(pos: int, q_table: list, eps: float) -> int:
     if random.uniform(0,1) < eps:
         return random.choice([0,1])
     
     if q_table[pos][0] < q_table[pos][1]:
-        return -1
+        return 0
     else:
         return 1
 
@@ -73,24 +77,30 @@ def main():
     lr = 0.1
 
     for epoch in range(50):
+        pos = start
+        total_score = 0
 
         while True:
-
- 
-            print_map(world,pos,end)
+            
+            if epoch > 45:
+                print_map(world,pos,end)
             move = choose_move(pos, q_table, eps)            
-            if move == 'a':
+            
+            if move == 1:
                 prev_pos = pos
                 pos -= 1
                 pos = boundaries(pos, length)
-                total_score+=rewards(pos,end,prev_pos)
+                reward = rewards(pos,end,prev_pos)
+                total_score+=reward
 
-            elif move == 'd':
+
+            elif move == 0:
                 prev_pos = pos
                 pos+=1
                 pos = boundaries(pos,length)                          
-                total_score+=rewards(pos,end,prev_pos)
-
+                reward = rewards(pos,end,prev_pos)
+                total_score+=reward
+                
             if pos == end:
                 break
 
@@ -98,7 +108,9 @@ def main():
                 break
         
         eps *= eps_rate
-        print(total_score)
+        
+        if epoch>44:
+            print(total_score)
     
 
 if __name__ == "__main__": 
