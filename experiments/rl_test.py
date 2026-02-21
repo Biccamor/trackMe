@@ -35,6 +35,19 @@ def boundaries(pos, length) -> int:
 
     return pos 
 
+def print_map(world,  pos, end):
+    print("----------------------------------------------")
+    result = ""
+    for i, el in enumerate(world):
+        if i == end:
+            result += "M"
+        if i==pos:
+            result+="P"
+        else:
+            result+="0"
+    print(result)
+    print("-----------------------------------------------")
+
 def main():
     world = [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,2,0,0,0,0,0]
     length = len(world)
