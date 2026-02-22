@@ -2,10 +2,11 @@ import time, random
 
 def init(world) -> tuple:
     for i in range(len(world)):
-        if world[i]==1:
-            start = i
-        if world[i]==2:
-            end = i
+        for j in range(len(world[0])):
+            if world[i]==1:
+                start = i
+            if world[i]==2:
+                end = i
     
     return (start, end)
 
@@ -58,17 +59,27 @@ def bellman_equation(q_table:list, lr: float, reward:int, pos: int, next_pos, mo
 
 def choose_move(pos: int, q_table: list, eps: float) -> int:
     if random.uniform(0,1) < eps:
-        return random.choice([0,1])
+        return random.choice([0,1,2,3])
+    max_value = max(q_table[pos])
+    index = q_table[pos].index(max_value)
+
+    return index
+
+def move(index: int, pos: int, moves:dict):
     
-    if q_table[pos][0] < q_table[pos][1]:
-        return 1
-    else:
-        return 0
+    return pos + moves[index]
 
 def main():
-    world = [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,2,0,0,0,0,0]
+    world = [[0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0],
+             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],]
     length = len(world)
-    q_table = [[0.0, 0.0] for _ in range(length)]
+    q_table = [[0.0, 0.0, 0.0, 0.0] for _ in range(length)]
     start, end = init(world)
     total_score = 0
     pos = start
@@ -76,6 +87,12 @@ def main():
     eps_rate = 0.98
     eps_min = 0.01
     lr = 0.1
+    moves = {
+        0: [1,0],
+        1: [-1,0],
+        2: [0,1],
+        3: [0,-1]
+    }
 
     for epoch in range(50):
         pos = start
