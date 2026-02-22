@@ -3,10 +3,10 @@ import time, random
 def init(world) -> tuple:
     for i in range(len(world)):
         for j in range(len(world[0])):
-            if world[i]==1:
-                start = i
-            if world[i]==2:
-                end = i
+            if world[i][j]==1:
+                start = [i,j]
+            if world[i][j]==2:
+                end = [i,j]
     
     return (start, end)
 
@@ -26,13 +26,16 @@ def rewards(pos: int,end: int,  prev_pos: int) -> int:
         return -30 
 
 
-def boundaries(pos, length) -> int:
+def boundaries(pos:int, length_x:int, length_y:int) -> int:
     
-    if pos<0:
-        pos = 0
-
-    if pos>length-1:
-        pos = length-1
+    if pos[0]<0:
+        pos[0] = 0
+    if pos[1]<0:
+        pos[1]=0
+    if pos[0]>length_x-1:
+        pos[0]=length_x-1
+    if pos[1]>length_y-1:
+        pos[1] = length_y-1
 
     return pos 
 
@@ -67,7 +70,10 @@ def choose_move(pos: int, q_table: list, eps: float) -> int:
 
 def move(index: int, pos: int, moves:dict):
     
-    return pos + moves[index]
+    pos[0] += moves[index][0]
+    pos[1] += moves[index][1]
+
+    return pos
 
 def main():
     world = [[0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -103,25 +109,14 @@ def main():
             if epoch > 45:
                 time.sleep(0.1)
                 print_map(world,pos,end)
-            move = choose_move(pos, q_table, eps)            
+            idx = choose_move(pos, q_table, eps)            
+            prev_pos = pos
+            pos = move(idx, pos, moves)
+            pos = boundaries(pos, len(world[0]), length)
+            reward = rewards(pos,end,prev_pos)
+            bellman_equation(q_table,lr,reward,prev_pos,pos,move)
+            total_score+=reward
             
-            if move == 1:
-                prev_pos = pos
-                pos -= 1
-                pos = boundaries(pos, length)
-                reward = rewards(pos,end,prev_pos)
-                bellman_equation(q_table,lr,reward,prev_pos,pos,move)
-                total_score+=reward
-
-
-            elif move == 0:
-                prev_pos = pos
-                pos+=1
-                pos = boundaries(pos, length)
-                reward = rewards(pos,end,prev_pos)
-                bellman_equation(q_table,lr,reward,prev_pos,pos,move)
-                total_score+=reward
-
             if pos == end:
                 break
             if step > 20:

@@ -48,13 +48,13 @@ def main():
     width_crop,heigth_crop = int(0.2*width_max), int(0.2*heigth_max)
     
     x,y = (width_max-width_crop) // 2, (heigth_max-heigth_crop) // 2
-
     while True:
         ret, frame = cap.read()
         if ret == False: break
         crop_frame = frame[y:y+heigth_crop, x:x+width_crop]
-    
-        cv.imshow('cap', crop_frame)
+        results = model.track(source=crop_frame,  tracker="bytetrack.yaml", persist=True)
+        new_frame = results[0].plot()
+        cv.imshow('cap', new_frame)
         input_key = cv.waitKey(30) & 0xFF
         x,y = move(x,y,input_key)
 
