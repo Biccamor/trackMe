@@ -10,21 +10,32 @@ def init(world) -> tuple:
     
     return (start, end)
 
+def manhattan_dist(pos: list, prev_pos: list, end: list) -> tuple:
 
-def rewards(pos: int,end: int,  prev_pos: int) -> int:
+    prev_dist = abs(prev_pos[0]-end[0]) + abs(prev_pos[1]-end[1])
+    dist = abs(pos[0]-end[0]) + abs(pos[1]-end[1])
+
+    return (prev_dist, dist)
+
+def rewards(pos: list,end: list,  prev_pos: list) -> int:
     
-    if pos == end:
+    prev_dist, dist = manhattan_dist(pos,prev_pos,end)
+
+    if pos[0] == end[0] and pos[1]==end[1]:
         return 100
 
-    elif abs(end-pos) > abs(end-prev_pos):
-        return -10
+    elif prev_dist < dist:
+        return -15
 
-    elif abs(end-pos) < abs(end-prev_pos):
+    elif dist < prev_dist:
         return 10
 
-    elif pos == prev_pos:
-        return -30 
+    elif pos[0]==prev_pos[0] and pos[1]==prev_pos[1]:
+        return -30
 
+    elif dist == prev_dist:
+        return -10
+     
 
 def boundaries(pos:int, length_x:int, length_y:int) -> int:
     
@@ -32,27 +43,34 @@ def boundaries(pos:int, length_x:int, length_y:int) -> int:
         pos[0] = 0
     if pos[1]<0:
         pos[1]=0
-    if pos[0]>length_x-1:
-        pos[0]=length_x-1
-    if pos[1]>length_y-1:
-        pos[1] = length_y-1
+    if pos[0]>length_y-1:
+        pos[0]=length_y-1
+    if pos[1]>length_x-1:
+        pos[1] = length_x-1
 
     return pos 
 
 def print_map(world: list,  pos: int, end: int):
     print("----------------------------------------------")
     result = ""
-    for i, el in enumerate(world): 
-        if i==pos:
-            result+="P"
-        elif i == end:
-            result += "M"
-        else:
-            result+="0"
+    for i, el in enumerate(world):
+        for j, el in enumerate(world[0]): 
+            if [i,j]==pos:
+                result+="P"
+            elif [i,j] == end:
+                result += "M"
+            else:
+                result+="0"
+        result += "\n"
     print(result)
     print("-----------------------------------------------")
 
-def bellman_equation(q_table:list, lr: float, reward:int, pos: int, next_pos, move: int):
+def flatten_pos(pos:list, width: int) -> int:
+    return pos[1] + pos[0]*width  # pos[0] to y a pos[1] to x 
+
+def bellman_equation(q_table:list, lr: float, reward:int, pos: int, next_pos, move: int, width: int):
+    pos  = flatten_pos(pos=pos, width=width)
+    next_pos = flatten_pos(next_pos, width)
     
     gamma = 0.9
     old_value = q_table[pos][move]
@@ -60,7 +78,9 @@ def bellman_equation(q_table:list, lr: float, reward:int, pos: int, next_pos, mo
     new_value = old_value + lr * (reward + gamma * max_value- old_value)
     q_table[pos][move] = new_value
 
-def choose_move(pos: int, q_table: list, eps: float) -> int:
+def choose_move(pos: int, q_table: list, eps: float, width: int) -> int:
+    pos = flatten_pos(pos, width)
+    
     if random.uniform(0,1) < eps:
         return random.choice([0,1,2,3])
     max_value = max(q_table[pos])
@@ -85,10 +105,9 @@ def main():
              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
              [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],]
     length = len(world)
-    q_table = [[0.0, 0.0, 0.0, 0.0] for _ in range(length)]
+    q_table = [[0.0, 0.0, 0.0, 0.0] for _ in range(length*len(world[0]))]
     start, end = init(world)
     total_score = 0
-    pos = start
     eps = 1.0
     eps_rate = 0.98
     eps_min = 0.01
@@ -100,31 +119,32 @@ def main():
         3: [0,-1]
     }
 
-    for epoch in range(50):
-        pos = start
+    for epoch in range(120):
+        pos = start.copy()
         total_score = 0
         step = 0
         while True:
             step +=1
-            if epoch > 45:
+            if epoch > 118:
                 time.sleep(0.1)
                 print_map(world,pos,end)
-            idx = choose_move(pos, q_table, eps)            
-            prev_pos = pos
+
+            idx = choose_move(pos, q_table, eps, len(world[0]))            
+            prev_pos = pos.copy()
             pos = move(idx, pos, moves)
             pos = boundaries(pos, len(world[0]), length)
             reward = rewards(pos,end,prev_pos)
-            bellman_equation(q_table,lr,reward,prev_pos,pos,move)
+            bellman_equation(q_table,lr,reward,prev_pos,pos,idx, len(world[0]))
             total_score+=reward
             
             if pos == end:
                 break
-            if step > 20:
+            if step > 100:
                 break
         eps *= eps_rate
         eps = max(eps_min, eps)
 
-        if epoch>44:
+        if epoch>118:
             print(total_score)
     
 
