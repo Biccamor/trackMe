@@ -1,11 +1,17 @@
 import cv2 as cv
 import numpy as np
-import keyboard
 from ultralytics import YOLO
+import joblib
+from huggingface_hub import hf_hub_download
 
 cap = cv.VideoCapture("video.mp4")
-model = YOLO('yolo11n.pt')
+REPO_ID = "YOUR_REPO_ID"
+FILENAME = "sklearn_model.joblib"
 
+model = joblib.load(
+    hf_hub_download(repo_id="mshamrai/yolov8n-visdrone", 
+                    filename="best.pt")
+)
 def open() -> bool:
 
     return cap.isOpened()
@@ -52,10 +58,19 @@ def main():
         ret, frame = cap.read()
         if ret == False: break
         crop_frame = frame[y:y+heigth_crop, x:x+width_crop]
-        results = model.track(source=crop_frame,  tracker="bytetrack.yaml", persist=True)
+        results = model.predict(
+            source=crop_frame,
+            conf=0.25,          # NMS confidence threshold
+            iou=0.45,           # NMS IoU threshold
+            agnostic_nms=False, # NMS class-agnostic
+            max_det=1000,       # maximum number of detections
+            verbose=False       # Ukrywa spam w konsoli dla każdej klatki
+        )
+
         new_frame = results[0].plot()
-        cv.imshow('cap', new_frame)
+        cv.imshow('Dron', new_frame)
         input_key = cv.waitKey(30) & 0xFF
+
         x,y = move(x,y,input_key)
 
         if x==float('inf') and y==float('inf'):
