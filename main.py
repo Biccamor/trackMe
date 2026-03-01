@@ -1,17 +1,14 @@
 import cv2 as cv
 import numpy as np
 from ultralytics import YOLO
-import joblib
 from huggingface_hub import hf_hub_download
 
 cap = cv.VideoCapture("video.mp4")
-REPO_ID = "YOUR_REPO_ID"
-FILENAME = "sklearn_model.joblib"
 
-model = joblib.load(
-    hf_hub_download(repo_id="mshamrai/yolov8n-visdrone", 
-                    filename="best.pt")
-)
+model_path = hf_hub_download(repo_id="mshamrai/yolov8n-visdrone", filename="best.pt")
+model = YOLO(model_path)
+
+
 def open() -> bool:
 
     return cap.isOpened()
@@ -60,10 +57,10 @@ def main():
         crop_frame = frame[y:y+heigth_crop, x:x+width_crop]
         results = model.predict(
             source=crop_frame,
-            conf=0.25,          # NMS confidence threshold
+            conf=0.2,          # NMS confidence threshold
             iou=0.45,           # NMS IoU threshold
             agnostic_nms=False, # NMS class-agnostic
-            max_det=1000,       # maximum number of detections
+            max_det=10,       # maximum number of detections
             verbose=False       # Ukrywa spam w konsoli dla każdej klatki
         )
 
