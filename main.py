@@ -8,7 +8,6 @@ cap = cv.VideoCapture("video.mp4")
 model_path = hf_hub_download(repo_id="mshamrai/yolov8n-visdrone", filename="best.pt")
 model = YOLO(model_path)
 
-
 def open() -> bool:
 
     return cap.isOpened()
@@ -28,7 +27,7 @@ def border(x:int, y:int, width_max: int, height_max: int) -> tuple:
 
 def move(x:int,y:int, input_key) -> tuple:
 
-    velocity = 20
+    velocity = 30
 
     if input_key == ord('w'):
         y-=velocity
@@ -55,13 +54,16 @@ def main():
         ret, frame = cap.read()
         if ret == False: break
         crop_frame = frame[y:y+heigth_crop, x:x+width_crop]
-        results = model.predict(
+        results = model.track(
             source=crop_frame,
             conf=0.2,          # NMS confidence threshold
             iou=0.45,           # NMS IoU threshold
             agnostic_nms=False, # NMS class-agnostic
             max_det=10,       # maximum number of detections
-            verbose=False       # Ukrywa spam w konsoli dla każdej klatki
+            verbose=False,       # Ukrywa spam w konsoli dla każdej klatki
+            tracker="drone_botsort.yaml",
+            persist=True,
+            classes=[3,4,5,6,7,8,9] # all classes except for people and pedestrians
         )
 
         new_frame = results[0].plot()
